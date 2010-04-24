@@ -13,9 +13,11 @@ void* reader(void* arg) {
 	free(arg);
 	while (1) {
 		enter_reader_monitor(rwmonitor);
-		printf("Reader:%d Value:%d\n",threadnumber,value);
+		printf("Entering Reader:%d Value:%d\n",threadnumber,value);
+		sleep(rand()%3);
+		printf("Exiting  Reader:%d Value:%d\n",threadnumber,value);
 		exit_reader_monitor(rwmonitor);
-		sleep(1);
+		sleep(3);
 	}
 }
 
@@ -25,10 +27,12 @@ void* writer(void* arg) {
 	while (1) {
 		enter_writer_monitor(rwmonitor);
 		int newvalue = rand()%100;
-		printf("Writer:%d Old value:%d New value:%d\n",threadnumber,value,newvalue);
+		printf("Entering Writer:%d Old value:%d New value:%d\n",threadnumber,value,newvalue);
+		sleep(rand()%3);
+		printf("Exiting  Writer:%d Old value:%d New value:%d\n",threadnumber,value,newvalue);
 		value = newvalue;
 		exit_writer_monitor(rwmonitor);
-		sleep(1);	
+		sleep(3);	
 	}
 }
 
