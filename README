@@ -1,1 +1,2 @@
 Trabalhos de sisop2 de André Ferreira
+Adicionar sleep dentro da seção critica, com printfs antes e depois, para garantir que exclusão está ocorrendo corretamente.
