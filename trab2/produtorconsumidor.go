@@ -8,15 +8,15 @@ import (
 )
 
 func main() {
-	var consumers *int = flag.Int("c", -1, "number of consumers, must be bigger than 0")
-	var producers *int = flag.Int("p", -1, "number of producers, must be bigger than 0")
-	var buffersize *int = flag.Int("b", -1, "size of buffer, must be bigger or equal to 0")
+	consumers := flag.Int("c", -1, "number of consumers, must be bigger than 0")
+	producers := flag.Int("p", -1, "number of producers, must be bigger than 0")
+	buffersize := flag.Int("b", -1, "size of buffer, must be bigger or equal to 0")
 	flag.Parse()
 	if *consumers <= 0 || *producers <= 0 || *buffersize < 0 {
 		flag.PrintDefaults()
 		return
 	}
-	var canal = make(chan int, *buffersize)
+	canal := make(chan int, *buffersize)
 	for i := 0; i < *producers; i++ {
 		var threadnumber = i
 		go func () {
