@@ -1,3 +1,4 @@
+#include <pthread.h>
 typedef void* rwmonitor_t;
 
 void enter_reader_monitor(rwmonitor_t monitor);
