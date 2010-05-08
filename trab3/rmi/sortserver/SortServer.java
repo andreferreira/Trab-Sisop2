@@ -3,7 +3,7 @@ import java.rmi.*;
 public class SortServer {
    public SortServer() throws Exception {    
 
-     /* criacao do objeto NullImpl */
+     /* criacao do objeto SortImpl */
      SortInterface sort = new SortImpl();
 
      /* associacao desse objeto a um nome */
