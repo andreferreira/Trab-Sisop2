@@ -1,0 +1,53 @@
+
+
+REMOTE PROCEDURE CALL (RPC)
+---------------------------
+
+O diretório contém 3 programas:
+
+- square.x: escrito IDL sunRPC. É arquivo que descreve os procedimentos
+  que serão implementados via RPC.
+- client.c: programa escrito pelo usuário do sistema e que realiza o contato
+  com o servidor "square" em RPC. Na sua implementacão são usados os stubs
+  gerado a partir de square.x.
+- servidor.c: programa escrito pelo usuário do sistema e que implementa o
+  procedimento de cálculo de raiz quadrada. Deve respeitar prototypes gerados
+  nos stubs a partir de square.x
+
+Passos a executar:
+
+% rpcgen square.x
+% gcc -o client client.c square_clnt.c square_xdr.c -lrpcsvc
+% gcc -o server server.c square_svc.c square_xdr.c -lrpcsvc
+
+Disparar o programa server em uma janela (ou máquina) e o programa client em
+outra janela (ou máquina). Client precisa de dois parâmetros: IP do servidor
+e número a ser elevado ao quadrado.
+
+
+
+
+
+
+
+Requisitos necessários para executar programas RPC
+--------------------------------------------------
+
+No sistema devem estar disponíveis as seguintes ferramentas:
+1. Compilador IDL (rpcgen)
+2. Compilador gcc
+3. Biblioteca librpcsvc.a
+4. Portmap
+
+Além do mais é necessário que o portmapper esteja executando:
+
+- para verificar se portmapper executa: 
+	/usr/sbin/rpcinfo -p
+- se não estiver funcionando, pô-lo em execucão: 
+	/bin/portmap
+
+
+
+
+ 
+
