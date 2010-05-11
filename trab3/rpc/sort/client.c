@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
 	end = clock();
     
    /* Print out the difference */
-	printf ( "The interval was: %f seconds\n",
+	printf ( "%f\n",
 		(double)( end - start ) / (double)CLOCKS_PER_SEC);
     exit(0);
 }

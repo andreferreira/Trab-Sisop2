@@ -22,6 +22,6 @@ public class SortClient {
 			vector = c.sort(vector);
 		}
 		long end = System.nanoTime();
-		System.out.printf("%f segundos",(end - start) * 0.000000001);
+		System.out.printf("%f\n",(end - start) * 0.000000001);
     } 
 } 
