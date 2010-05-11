@@ -12,13 +12,12 @@ public class NullClient {
              Naming.lookup
              ("rmi://127.0.0.1/NullService"); 
 
-	long start = System.nanoTime();
-	/* chamada de metodos do objeto remoto */
-	for (int i = 0; i < 5000; i++) {
-        c.doNothing(); 
-	}
-    long end = System.nanoTime();
-    long timedone = end - start;
-    System.out.printf("%d nanosegundos",timedone);
+		long start = System.nanoTime();
+		/* chamada de metodos do objeto remoto */
+		for (int n = 0; n < 5000; n++) {
+			c.doNothing(); 
+		}
+		long end = System.nanoTime();
+		System.out.printf("%f segundos",(end - start) * 0.000000001);
 	}
 } 

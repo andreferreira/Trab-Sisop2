@@ -10,16 +10,18 @@ public class SortClient {
 	/* encontrar o objeto remoto a partir do nome */
         c = (SortInterface)
              Naming.lookup
-             ("rmi://127.0.0.1/SortService"); 
-		int[] vector = new int[250];
-		for (int i = 0; i < 250; i++) {
-			vector[i] = i;
+             ("rmi://127.0.0.1/SortService");
+        long start = System.nanoTime();
+        for (int n = 0; n < 5000; n++) { 
+			int[] vector = new int[250];
+			for (int i = 0; i < 250; i++) {
+				vector[i] = i;
+			}
+		/* chamada de metodos do objeto remoto */
+		
+			vector = c.sort(vector);
 		}
-	/* chamada de metodos do objeto remoto */
-	
-        vector = c.sort(vector);
-        for (int i : vector) {
-			System.out.println (i+" ");
-		}
+		long end = System.nanoTime();
+		System.out.printf("%f segundos",(end - start) * 0.000000001);
     } 
 } 
