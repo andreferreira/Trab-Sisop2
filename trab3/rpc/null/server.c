@@ -10,6 +10,5 @@
 #include	"null.h"
 
 void* nilproc_1_svc(void* args,struct svc_req *rqstp) {
-    printf("received\n");
     return;
 }
