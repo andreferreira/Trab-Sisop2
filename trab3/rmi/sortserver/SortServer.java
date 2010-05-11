@@ -1,18 +1,17 @@
 import java.rmi.*;
 
 public class SortServer {
-   public SortServer() throws Exception {    
-
+   public SortServer(String ip) throws Exception {    
      /* criacao do objeto SortImpl */
      SortInterface sort = new SortImpl();
 
      /* associacao desse objeto a um nome */
      java.rmi.Naming.rebind
-     	("rmi://127.0.0.1/SortService",
+     	("rmi://"+ip+"/SortService",
      	sort);
    }
 
    public static void main(String args[]) throws Exception{
-     new SortServer();
+     new SortServer(args[0]);
    }
 }
