@@ -10,7 +10,7 @@ public class NullClient {
 	/* encontrar o objeto remoto a partir do nome */
         c = (NullInterface)
              Naming.lookup
-             ("rmi://127.0.0.1/NullService"); 
+             ("rmi://"+args[0]+"/NullService"); 
 
 		long start = System.nanoTime();
 		/* chamada de metodos do objeto remoto */

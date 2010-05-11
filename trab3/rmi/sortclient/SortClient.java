@@ -10,7 +10,7 @@ public class SortClient {
 	/* encontrar o objeto remoto a partir do nome */
         c = (SortInterface)
              Naming.lookup
-             ("rmi://127.0.0.1/SortService");
+             ("rmi://"+args[0]+"/SortService");
         long start = System.nanoTime();
         for (int n = 0; n < 5000; n++) { 
 			int[] vector = new int[250];
