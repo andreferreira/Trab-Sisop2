@@ -19,12 +19,13 @@ int main(int argc, char **argv) {
        exit(0);
     }
 
-    cl = clnt_create(argv[1], SORT_PROG, SORT_VERS, "tcp");
+	cl = clnt_create(argv[1], SORT_PROG, SORT_VERS, "tcp");
 	clock_t start, end;
 
 	int n;
 	start = clock();
 	for(n=0; n<ITERMAX; n++){
+		/*cl = clnt_create(argv[1], SORT_PROG, SORT_VERS, "tcp"); /* erro de timeout sem o destroy, segfault com*/
 		int i;
 		for (i=0;i<250;i++)
 			in.arg1[i] = i;
@@ -32,6 +33,7 @@ int main(int argc, char **argv) {
 		   printf("%s", clnt_sperror(cl, argv[1]));
 		   exit(0);
 		}
+		/*clnt_destroy(cl); /*segmentation fault*/
 	}
 	
 	end = clock();

@@ -17,16 +17,18 @@ int main(int argc, char **argv) {
        exit(0);
     }
 
-    cl = clnt_create(argv[1], NIL_PROG, NIL_VERS, "tcp");
+    cl = clnt_create(argv[1], SORT_PROG, SORT_VERS, "tcp");
 	clock_t start, end;
 
 	int n;
 	start = clock();
 	for(n=0; n<ITERMAX; n++){
+		/*cl = clnt_create(argv[1], SORT_PROG, SORT_VERS, "tcp"); /* erro de timeout sem o destroy, segfault com*/
 		if ( (nilproc_1(NULL,cl)) == NULL) {
 		   printf("%s", clnt_sperror(cl, argv[1]));
 		   exit(0);
 		}
+		/*clnt_destroy(cl); /*segmentation fault*/
 	}
 	end = clock();
     
