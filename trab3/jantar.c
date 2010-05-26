@@ -166,11 +166,11 @@ typedef struct {
 } message_t;
 
 int compareMessage(const void * pa, const void * pb) {
-	message_t a = *(message_t*)pa;
-	message_t b = *(message_t*)pb;
-	if (a.clock == b.clock)
-		return a.id - b.id;
-	return a.clock - b.clock;
+	message_t *a = (message_t*)pa;
+	message_t *b = (message_t*)pb;
+	if (a->clock == b->clock)
+		return a->id - b->id;
+	return a->clock - b->clock;
 }
 
 message_t queue[1000];
@@ -203,8 +203,29 @@ void sendMessage(int sendsock,message_t msg) {
 	broadcast(sendsock,buf,strlen(buf)+1);
 }
 
+/*void printQueue(int clock) {
+	if (id != 1 || queuesize == 0) return;
+	printf("\n\n");
+	int i;
+	int printedclock = 0;
+	for (i = 0; i < queuesize; i++) {
+		if (!printedclock && clock <= queue[i].clock) {
+			printf("<- %d\n",clock);
+			printedclock = 1;
+		}
+		if (queue[i].op == POP)
+			printf("POP ");
+		else
+			printf("VOP ");
+		printf("%d %d\n",queue[i].id,queue[i].clock);
+	}
+	if (!printedclock)
+		printf("<-\n");
+}*/
+
 void processMessages(int clock) {
 	sortQueue();
+	//printQueue(clock);
 	int i;
 	for (i = 0; i < queuesize && queue[i].clock < clock; i++) {
 		if (queue[i].op == VOP) {
@@ -260,12 +281,10 @@ void hearing(int sock, int sendsock, int lastAck[]) {
 			sendMessage(sendsock,outmsg);
 			break;
 		case ACK:
-			if (msg.id == id) return;
 			lastAck[msg.id-1] = msg.clock;
 			int oldestAck = msg.clock;
 			int i;
 			for (i = 0; i < 5; i++) {
-				if (i+1 == id) continue;
 				if (lastAck[i] < oldestAck)
 					oldestAck = lastAck[i];
 			}
