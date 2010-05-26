@@ -21,7 +21,7 @@ pthread_mutex_t lock;
 pthread_cond_t condgo;
 int cango;
 int s;
-int forks[10];
+int forks[5];
 
 void waitForGo() {
 	pthread_mutex_lock(&lock);
@@ -63,7 +63,6 @@ void setMaxAndIncClock(int fromclock) {
 int createSocketListen(int numeroPorta) {
 	int sock;
 	struct sockaddr_in echoServAddr;
-	struct sockaddr_in echoClntAddr;
 
     /* criar socket UDP para receber ou enviar datagramas */
     if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){
@@ -86,7 +85,6 @@ int createSocketListen(int numeroPorta) {
 
 int createSocketSend() {
 	int sock;
-    struct sockaddr_in echoServAddr;
 	
 	if ((sock = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) < 0){
 		perror ("socket() falhou");
@@ -95,30 +93,60 @@ int createSocketSend() {
 
 }
 
+void sendSelf(int sock,char *msg, int tam) {
+	struct sockaddr_in echoServAddr;
+	int toid = id;
+	memset(&echoServAddr, 0, sizeof(echoServAddr));
+	echoServAddr.sin_family = AF_INET;
+	echoServAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+	echoServAddr.sin_port   = htons(PORT+toid);
+	sendto(sock, msg, tam, 0,
+		(struct sockaddr *) &echoServAddr,
+		sizeof(echoServAddr));
+}
+
 void thinking() {
+	printf("(%d,%d) : THINKING\n",id,getClock());
 	sleep(rand()%5+1);
 }
 
-void reqp() {
-
+void reqp(int sendsock,int fork) {
+	char buf[ECHOMAX];
+	sprintf(buf,"%d %d %c %d",id,incClock(),RPOP,fork);
+	cango = 0;
+	sendSelf(sendsock,buf, strlen(buf)+1);
+	waitForGo();
 }
 
-void reqv() {
-
+void reqv(int sendsock,int fork) {
+	char buf[ECHOMAX];
+	sprintf(buf,"%d %d %c %d",id,incClock(),RVOP,fork);
+	sendSelf(sendsock,buf, strlen(buf)+1);
 }
 
 void eating() {
+	printf("(%d,%d) : EATING\n",id,getClock());
 	sleep(rand()%5+1);
 }
 
-void hungry() {
-	
+void hungry(int sendsock) {
+	printf("(%d,%d) : HUNGRY\n",id,getClock());
+	int fork1 = id-1;
+	int fork2 = fork1+1;
+	if (fork2 == 5) {
+		fork1 = 0;
+		fork2 = 4;
+	}
+	reqp(sendsock,fork1);
+	reqp(sendsock,fork2);
+	eating();
+	reqv(sendsock,fork1);
+	reqv(sendsock,fork2);
 }
 
 void broadcast(int sock,char *msg, int tam) {
 	struct sockaddr_in echoServAddr;
 	int toid;
-	int j;
 	//for (j=0,toid =(id+3)% 5+1;  j<2;  j++,toid=id%5+1) {
 	for (toid = 1; toid <= 5; toid++) {
 		memset(&echoServAddr, 0, sizeof(echoServAddr));
@@ -166,6 +194,7 @@ message_t readMessage(char* buffer) {
 	ret.clock = fromclock;
 	ret.op = op;
 	ret.param = param;
+	return ret;
 }
 
 void sendMessage(int sendsock,message_t msg) {
@@ -203,7 +232,6 @@ void hearing(int sock, int sendsock, int lastAck[]) {
 	struct sockaddr_in echoClntAddr;
     unsigned int cliAddrLen;
     char echoBuffer[ECHOMAX];
-    unsigned short echoServPort;
     int recvMsgSize;
     
     cliAddrLen = sizeof(echoClntAddr);	
@@ -220,14 +248,14 @@ void hearing(int sock, int sendsock, int lastAck[]) {
 			outmsg = msg;
 			if (msg.op == RPOP) outmsg.op = POP;
 			else outmsg.op = VOP;
-			outmsg.clock = incClock()-1;
+			outmsg.clock = incClock();
 			sendMessage(sendsock,outmsg);
 			break;
 		case POP:
 		case VOP:
 			putInQueue(msg);
 			outmsg.id = id;
-			outmsg.clock = incClock()-1;
+			outmsg.clock = incClock();
 			outmsg.op = ACK;
 			sendMessage(sendsock,outmsg);
 			break;
@@ -270,13 +298,14 @@ int initializeProcess() {
 
 void initializeForks() {
 	int i;
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < 5; i++)
 		forks[i] = 1;
 }
 
 int main(int argc, char *argv[]) {
 	initializeForks();
 	id = initializeProcess();
+	srand(time(NULL)+id);
 	pthread_t helperthread;
 	pthread_mutex_init(&lock,NULL);
 	pthread_create(&helperthread,NULL,helper,NULL);
@@ -285,7 +314,7 @@ int main(int argc, char *argv[]) {
 	//broadcast(sendsock,"Hello!",strlen("Hello!")+1);
 	while (1) {
 		thinking();
-		hungry();
+		hungry(sendsock);
 	}
 	return 0;
 }
