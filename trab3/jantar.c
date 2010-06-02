@@ -57,6 +57,7 @@ int incClock() {
 }
 
 /*Atomicamente faz a operaçao clock = max(clock,fromclock)+1*/
+/*Utilizado no relogio de lamport*/
 void setMaxAndIncClock(int fromclock) {
 	pthread_mutex_lock(&lock);
 	if (fromclock > lclock)
@@ -151,8 +152,8 @@ void hungry(int sendsock) {
 		fork1 = 0;
 		fork2 = 4;
 	}
-	reqp(sendsock,fork1);
-	reqp(sendsock,fork2);
+	reqp(sendsock,fork1); /*bloqueia o filosofo ate conseguir o garfo 1*/
+	reqp(sendsock,fork2); /*bloqueia o filosofo ate conseguir o garfo 1*/
 	eating();
 	reqv(sendsock,fork1);
 	reqv(sendsock,fork2);
@@ -191,10 +192,11 @@ int compareMessage(const void * pa, const void * pb) {
 	return a->clock - b->clock;
 }
 
+/*fila de mensagens*/
 message_t queue[1000];
 int queuesize = 0;
 
-/*Adiciona a fila*/
+/*Adiciona mensagem na fila*/
 void putInQueue(message_t msg) {
 	msg.remove = 0;
 	queue[queuesize++] = msg;
@@ -309,7 +311,13 @@ void hearing(int sock, int sendsock, int lastAck[]) {
 			outmsg.op = ACK;
 			sendMessage(sendsock,outmsg);
 			break;
-		case ACK:
+		case ACK: 
+		/*recebemos mensagem de ACK. Sabemos que o processo 
+		 * que a enviou nunca mais enviara uma mensagem com clock menor 
+		 * que a desta, atualizamos a informaçao de clock que temos 
+		 * desse processo, e caso o menor clock conhecido de todos os 
+		 * processos tiver aumentado, processamos todas mensagens de 
+		 * clock inferior a esse da fila*/
 			lastAck[msg.id-1] = msg.clock;
 			int oldestAck = msg.clock;
 			int i;
@@ -365,9 +373,10 @@ int main(int argc, char *argv[]) {
 	printf("Filosofo %d criado\n",id);
 	int sendsock = createSocketSend();
 	//broadcast(sendsock,"Hello!",strlen("Hello!")+1);
-	while (1) {
+	while (1) { /*loop principal do filosofo*/
+				/*filosofo exemplar*/
 		thinking();
-		hungry(sendsock);
+		hungry(sendsock); 
 	}
 	return 0;
 }
