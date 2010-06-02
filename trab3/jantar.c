@@ -159,7 +159,7 @@ void hungry(int sendsock) {
 }
 
 
-/*Envia uma mensagem para todos os outros processos, atravez de 5 sendto por uma socket udp, porta destino é PORT + id, ip destino é 127.0.0.1*/
+/*Envia uma mensagem para todos os outros processos, atraves de 5 sendto por uma socket udp, porta destino é PORT + id, ip destino é 127.0.0.1*/
 void broadcast(int sock,char *msg, int tam) {
 	struct sockaddr_in echoServAddr;
 	int toid;
