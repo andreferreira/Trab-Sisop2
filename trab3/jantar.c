@@ -23,6 +23,7 @@ int cango;
 int s;
 int forks[5];
 
+/*Espera ate sendGo ser chamado*/
 void waitForGo() {
 	pthread_mutex_lock(&lock);
 	while (cango == 0)
@@ -30,6 +31,7 @@ void waitForGo() {
 	pthread_mutex_unlock(&lock);
 }
 
+/*Manda thread logica prosseguir pois conseguiu o recurso*/
 void sendGo() {
 	pthread_mutex_lock(&lock);
 	cango = 1;
@@ -37,6 +39,7 @@ void sendGo() {
 	pthread_mutex_unlock(&lock);
 }
 
+/*Retorna valor do clock*/
 int getClock() {
 	int ret;
 	pthread_mutex_lock(&lock);
@@ -45,6 +48,7 @@ int getClock() {
 	return ret;
 }
 
+/*Incrementa e retorna valor anterior do clock atomicamente*/
 int incClock() {
 	pthread_mutex_lock(&lock);
 	int ret = lclock++;
@@ -52,6 +56,7 @@ int incClock() {
 	return ret;
 }
 
+/*Atomicamente faz a operaçao clock = max(clock,fromclock)+1*/
 void setMaxAndIncClock(int fromclock) {
 	pthread_mutex_lock(&lock);
 	if (fromclock > lclock)
@@ -60,6 +65,7 @@ void setMaxAndIncClock(int fromclock) {
 	pthread_mutex_unlock(&lock);
 }
 
+/*Cria socket para receives*/
 int createSocketListen(int numeroPorta) {
 	int sock;
 	struct sockaddr_in echoServAddr;
@@ -83,6 +89,8 @@ int createSocketListen(int numeroPorta) {
 	return sock;
 }
 
+
+/*Cria socket para envios*/
 int createSocketSend() {
 	int sock;
 	
@@ -93,6 +101,7 @@ int createSocketSend() {
 
 }
 
+/*Manda uma mensagem para o socket do helper proprio*/
 void sendSelf(int sock,char *msg, int tam) {
 	struct sockaddr_in echoServAddr;
 	int toid = id;
@@ -105,11 +114,7 @@ void sendSelf(int sock,char *msg, int tam) {
 		sizeof(echoServAddr));
 }
 
-void thinking() {
-	printf("(%d,%d) : THINKING\n",id,getClock());
-	sleep(rand()%5+1);
-}
-
+/*Pede para helper fazer um POP em fork, bloqueia até helper executar sendGo*/
 void reqp(int sendsock,int fork) {
 	char buf[ECHOMAX];
 	sprintf(buf,"%d %d %c %d",id,incClock(),RPOP,fork);
@@ -118,17 +123,26 @@ void reqp(int sendsock,int fork) {
 	waitForGo();
 }
 
+/*Pede para helper fazer um VOP em fork*/
 void reqv(int sendsock,int fork) {
 	char buf[ECHOMAX];
 	sprintf(buf,"%d %d %c %d",id,incClock(),RVOP,fork);
 	sendSelf(sendsock,buf, strlen(buf)+1);
 }
 
+/*Estado do filosofo pensando*/
+void thinking() {
+	printf("(%d,%d) : THINKING\n",id,getClock());
+	sleep(rand()%5+1);
+}
+
+/*Estado do filosofo comendo*/
 void eating() {
 	printf("(%d,%d) : EATING\n",id,getClock());
 	sleep(rand()%5+1);
 }
 
+/*Estado do filosofo com fome, tenta obter os garfos, comer, e liberar os garfos*/
 void hungry(int sendsock) {
 	printf("(%d,%d) : HUNGRY\n",id,getClock());
 	int fork1 = id-1;
@@ -144,6 +158,8 @@ void hungry(int sendsock) {
 	reqv(sendsock,fork2);
 }
 
+
+/*Envia uma mensagem para todos os outros processos, atravez de 5 sendto por uma socket udp, porta destino é PORT + id, ip destino é 127.0.0.1*/
 void broadcast(int sock,char *msg, int tam) {
 	struct sockaddr_in echoServAddr;
 	int toid;
@@ -160,11 +176,13 @@ void broadcast(int sock,char *msg, int tam) {
 }
 
 typedef struct {
-	int id,clock,param;
-	char op;
-	int remove;
+	int id,clock,param; /*id e relogio de lamport do processo que enviou a mensagem, parametro de qual semaforo esta sendo usado para VOPs e POPs*/
+	char op; /*numero da operaçao sendo realizada*/
+	int remove; /*estrutura interna a fila, usado para marcar mensagens*/
 } message_t;
 
+
+/*Define a ordem das mensagens na fila*/
 int compareMessage(const void * pa, const void * pb) {
 	message_t *a = (message_t*)pa;
 	message_t *b = (message_t*)pb;
@@ -176,15 +194,20 @@ int compareMessage(const void * pa, const void * pb) {
 message_t queue[1000];
 int queuesize = 0;
 
+/*Adiciona a fila*/
 void putInQueue(message_t msg) {
 	msg.remove = 0;
 	queue[queuesize++] = msg;
 }
 
+
+/*Ordena a fila de acordo com o tempo e id das mensagens*/
 void sortQueue() {
 	qsort(queue,queuesize,sizeof(message_t),compareMessage);
 }
 
+
+/*Extrai a estrutura mensagem de um array de chars*/
 message_t readMessage(char* buffer) {
 	int fromid, fromclock, param;
 	char op;
@@ -197,6 +220,8 @@ message_t readMessage(char* buffer) {
 	return ret;
 }
 
+
+/*Envia mensagem para todos os filosofos*/
 void sendMessage(int sendsock,message_t msg) {
 	char buf[ECHOMAX];
 	sprintf(buf,"%d %d %c %d",msg.id,msg.clock,msg.op,msg.param);
@@ -223,6 +248,8 @@ void sendMessage(int sendsock,message_t msg) {
 		printf("<-\n");
 }*/
 
+
+/*Processa mensagens da fila com clock menor que clock*/
 void processMessages(int clock) {
 	sortQueue();
 	//printQueue(clock);
@@ -249,6 +276,8 @@ void processMessages(int clock) {
 	queuesize = j;
 }
 
+
+/*Receive da socket da thread helper e processa ou enfila a mensagem*/
 void hearing(int sock, int sendsock, int lastAck[]) {
 	struct sockaddr_in echoClntAddr;
     unsigned int cliAddrLen;
@@ -293,6 +322,8 @@ void hearing(int sock, int sendsock, int lastAck[]) {
 	}
 }
 
+
+/*Loop principal da thread helper*/
 void* helper(void* _) {
 	int listensock = createSocketListen(PORT+id);
 	int sendsock = createSocketSend();
@@ -305,6 +336,7 @@ void* helper(void* _) {
 	}
 }
 
+/*Cria os processos do filosofo, retorna a id do processo*/
 int initializeProcess() {
 	int id;
 	for (id = 1; id < 5; id++){
@@ -315,6 +347,8 @@ int initializeProcess() {
 	return id;
 }
 
+
+/*Inicializa Array dos Semaforos dos garfos */
 void initializeForks() {
 	int i;
 	for (i = 0; i < 5; i++)
